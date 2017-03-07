@@ -301,7 +301,7 @@ test_that("translateSQL sql server -> redshift datefromparts", {
                       sourceDialect = "sql server",
                       targetDialect = "redshift")$sql
   expect_equal(sql,
-               "SELECT TO_DATE(TO_CHAR(year,'0000')||'-'||TO_CHAR(month,'00')||'-'||TO_CHAR(day,'00'), ' YYYY- MM- DD') FROM table")
+               "SELECT TO_DATE(TO_CHAR(year,'0000FM')||'-'||TO_CHAR(month,'00FM')||'-'||TO_CHAR(day,'00FM'), 'YYYY-MM-DD') FROM table")
 })
 
 
@@ -548,4 +548,239 @@ test_that("translateSQL sql server -> Netezza CAST AS VARCHAR", {
     sourceDialect = "sql server",
     targetDialect = "netezza")$sql
     expect_equal(sql, "CAST(person_id  AS VARCHAR(1000));")
+})
+
+test_that("translateSQL sql server -> RedShift DATE ADD DAYS dd", {
+  sql <- translateSql("SELECT DATEADD(dd,30,drug_era_end_date) FROM drug_era;", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATEADD(day, 30, drug_era_end_date) FROM drug_era;")
+})
+
+test_that("translateSQL sql server -> RedShift DATE ADD MONTH mm", {
+  sql <- translateSql("SELECT DATEADD(mm,3,drug_era_end_date) FROM drug_era;", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATEADD(month, 3, drug_era_end_date) FROM drug_era;")
+})
+
+test_that("translateSQL sql server -> RedShift DATE ADD MONTH m", {
+  sql <- translateSql("SELECT DATEADD(m,3,drug_era_end_date) FROM drug_era;", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATEADD(month, 3, drug_era_end_date) FROM drug_era;")
+})
+
+test_that("translateSQL sql server -> RedShift DATE ADD YEAR yyyy", {
+  sql <- translateSql("SELECT DATEADD(yyyy,3,drug_era_end_date) FROM drug_era;", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATEADD(year, 3, drug_era_end_date) FROM drug_era;")
+})
+
+test_that("translateSQL sql server -> RedShift DATE ADD YEAR yy", {
+  sql <- translateSql("SELECT DATEADD(yy,3,drug_era_end_date) FROM drug_era;", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATEADD(year, 3, drug_era_end_date) FROM drug_era;")
+})
+
+test_that("translateSQL sql server -> RedShift DATE DIFF dd", {
+  sql <- translateSql("SELECT DATEDIFF(dd,drug_era_start_date,drug_era_end_date) FROM drug_era;", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATEDIFF(day, drug_era_start_date, drug_era_end_date) FROM drug_era;")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIMEFROMPARTS", {
+  sql <- translateSql("SELECT DATETIMEFROMPARTS(year,month,day,hour,minute,second,millisecond) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CAST(TO_CHAR(year,'0000FM')||'-'||TO_CHAR(month,'00FM')||'-'||TO_CHAR(day,'00FM')||' '||TO_CHAR(hour,'00FM')||':'||TO_CHAR(minute,'00FM')||':'||TO_CHAR(second,'00FM')||'.'||TO_CHAR(millisecond,'000FM') as TIMESTAMP) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift EOMONTH", {
+  sql <- translateSql("SELECT EOMONTH(date) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT LAST_DAY(date) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift VARIANCE", {
+  sql <- translateSql("SELECT VAR(a) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT VARIANCE(a) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift SQUARE", {
+  sql <- translateSql("SELECT SQUARE(a + b) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT ((a + b) * (a + b)) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift NEWID", {
+  sql <- translateSql("SELECT NEWID()", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT MD5(RANDOM()::TEXT || GETDATE()::TEXT)")
+})
+
+test_that("translateSQL sql server -> RedShift BOOL TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col BIT not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col BOOLEAN not null)")
+})
+
+test_that("translateSQL sql server -> RedShift MONEY TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col MONEY not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col DECIMAL(19, 4) not null)")
+})
+
+test_that("translateSQL sql server -> RedShift SMALLMONEY TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col SMALLMONEY not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col DECIMAL(10, 4) not null)")
+})
+
+test_that("translateSQL sql server -> RedShift TINYINT TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col TINYINT not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col SMALLINT not null)")
+})
+
+test_that("translateSQL sql server -> RedShift FLOAT TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col FLOAT(@s) not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col FLOAT not null)")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIME2 TYPE with precision specified", {
+  sql <- translateSql("CREATE TABLE table ( col DATETIME2(@p) not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col TIMESTAMP not null)")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIME2 TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col DATETIME2 not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col TIMESTAMP not null)")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIME TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col DATETIME not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col TIMESTAMP not null)")
+})
+
+test_that("translateSQL sql server -> RedShift SMALLDATETIME TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col SMALLDATETIME not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col TIMESTAMP not null)")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIMEOFFSET TYPE with precision specified", {
+  sql <- translateSql("CREATE TABLE table ( col DATETIMEOFFSET(@p) not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col TIMESTAMPTZ not null)")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIMEOFFSET TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col DATETIMEOFFSET not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col TIMESTAMPTZ not null)")
+})
+
+test_that("translateSQL sql server -> RedShift TEXT TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col TEXT not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col VARCHAR(max) not null)")
+})
+
+test_that("translateSQL sql server -> RedShift NTEXT TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col NTEXT not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col VARCHAR(max) not null)")
+})
+
+test_that("translateSQL sql server -> RedShift UNIQUEIDENTIFIER TYPE", {
+  sql <- translateSql("CREATE TABLE table ( col UNIQUEIDENTIFIER not null)", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "CREATE TABLE table ( col CHAR(36) not null)")
+})
+
+test_that("translateSQL sql server -> RedShift STDEV POP", {
+  sql <- translateSql("SELECT STDEVP(col) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT STDDEV_POP(col) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift VAR POP", {
+  sql <- translateSql("SELECT VARP(col) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT VAR_POP(col) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATEDIFF_BIG", {
+  sql <- translateSql("SELECT DATEDIFF_BIG(dd, start, end) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATEDIFF(day, start, end) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATE PART yyyy", {
+  sql <- translateSql("SELECT DATEPART(yyyy, start) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATE_PART(year, start) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATE PART yy", {
+  sql <- translateSql("SELECT DATEPART(yy, start) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATE_PART(year, start) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATE PART mm", {
+  sql <- translateSql("SELECT DATEPART(mm, start) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATE_PART(month, start) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATE PART m", {
+  sql <- translateSql("SELECT DATEPART(m, start) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATE_PART(month, start) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATE PART dd", {
+  sql <- translateSql("SELECT DATEPART(dd, start) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATE_PART(day, start) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATE PART other", {
+  sql <- translateSql("SELECT DATEPART(year, start), DATEPART(month, start), DATEPART(day, start) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT DATE_PART(year, start), DATE_PART(month, start), DATE_PART(day, start) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIME2FROMPARTS", {
+  sql <- translateSql("SELECT DATETIME2FROMPARTS(year,month,day,hour,minute,seconds, 0, 0) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CAST(TO_CHAR(year,'0000FM')||'-'||TO_CHAR(month,'00FM')||'-'||TO_CHAR(day,'00FM')||' '||TO_CHAR(hour,'00FM')||':'||TO_CHAR(minute,'00FM')||':'||TO_CHAR(seconds,'00FM') as TIMESTAMP) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIME2FROMPARTS with fractions", {
+  sql <- translateSql("SELECT DATETIME2FROMPARTS(year,month,day,hour,minute,seconds,fractions,precision) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CAST(TO_CHAR(year,'0000FM')||'-'||TO_CHAR(month,'00FM')||'-'||TO_CHAR(day,'00FM')||' '||TO_CHAR(hour,'00FM')||':'||TO_CHAR(minute,'00FM')||':'||TO_CHAR(seconds,'00FM')||'.'||TO_CHAR(fractions,repeat('0', precision) || 'FM') as TIMESTAMP) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIMEOFFSETFROMPARTS", {
+  sql <- translateSql("SELECT DATETIMEOFFSETFROMPARTS(year,month,day,hour,minute,seconds, 0,h_offset,m_offset, 0) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CAST(TO_CHAR(year,'0000FM')||'-'||TO_CHAR(month,'00FM')||'-'||TO_CHAR(day,'00FM')||' '||TO_CHAR(hour,'00FM')||':'||TO_CHAR(minute,'00FM')||':'||TO_CHAR(seconds,'00FM')||case when h_offset >= 0 then '+' else '-' end ||TO_CHAR(ABS(h_offset),'00FM')||':'||TO_CHAR(ABS(m_offset),'00FM') as TIMESTAMPTZ) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift DATETIMEOFFSETFROMPARTS with fractions", {
+  sql <- translateSql("SELECT DATETIMEOFFSETFROMPARTS(year,month,day,hour,minute,seconds,fractions,h_offset,m_offset,precision) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CAST(TO_CHAR(year,'0000FM')||'-'||TO_CHAR(month,'00FM')||'-'||TO_CHAR(day,'00FM')||' '||TO_CHAR(hour,'00FM')||':'||TO_CHAR(minute,'00FM')||':'||TO_CHAR(seconds,'00FM')||'.'||TO_CHAR(fractions,repeat('0',precision) || 'FM')||case when h_offset >= 0 then '+' else '-' end ||TO_CHAR(ABS(h_offset),'00FM')||':'||TO_CHAR(ABS(m_offset),'00FM') as TIMESTAMPTZ) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift GETUTCDATE", {
+  sql <- translateSql("SELECT GETUTCDATE();", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CURRENT_TIMESTAMP;")
+})
+
+test_that("translateSQL sql server -> RedShift SMALLDATETIMEFROMPARTS", {
+  sql <- translateSql("SELECT SMALLDATETIMEFROMPARTS(year,month,day,hour,minute) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CAST(TO_CHAR(year,'0000FM')||'-'||TO_CHAR(month,'00FM')||'-'||TO_CHAR(day,'00FM')||' '||TO_CHAR(hour,'00FM')||':'||TO_CHAR(minute,'00FM') as TIMESTAMP) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift SYSUTCDATETIME", {
+  sql <- translateSql("SELECT SYSUTCDATETIME();", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CURRENT_TIMESTAMP;")
+})
+
+test_that("translateSQL sql server -> RedShift ATN2", {
+  sql <- translateSql("SELECT ATN2(a, b) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT ATAN2(a, b) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift TRUNCATION OF NUMBER", {
+  sql <- translateSql("SELECT ROUND(expression,length,trunc) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT case when trunc = 0 then ROUND(CAST(expression AS FLOAT),length) else TRUNC(expression,length) end FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift CHARINDEX from position", {
+  sql <- translateSql("SELECT CHARINDEX('test',column, 3) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT case when CHARINDEX('test', SUBSTRING(column, 3)) > 0 then (CHARINDEX('test', SUBSTRING(column, 3)) + 3 - 1) else 0 end FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift QUOTENAME", {
+  sql <- translateSql("SELECT QUOTENAME(a) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT QUOTE_IDENT(a) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift SPACE", {
+  sql <- translateSql("SELECT SPACE(n) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT REPEAT(' ',n) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift STUFF", {
+  sql <- translateSql("SELECT STUFF(expression, start, length, replace) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT SUBSTRING(expression, 0, start)|| replace||SUBSTRING(expression, start + length) FROM table")
 })
