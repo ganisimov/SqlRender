@@ -784,3 +784,50 @@ test_that("translateSQL sql server -> RedShift STUFF", {
   sql <- translateSql("SELECT STUFF(expression, start, length, replace) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
   expect_equal(sql, "SELECT SUBSTRING(expression, 0, start)|| replace||SUBSTRING(expression, start + length) FROM table")
 })
+
+test_that("translateSQL sql server -> RedShift CONCAT", {
+  sql <- translateSql(
+    "SELECT CONCAT(p1,p2,p3,p4) FROM table", 
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, "SELECT CONCAT(CONCAT(CONCAT(p1,p2),p3),p4) FROM table")
+})
+
+test_that("translateSQL sql server -> RedShift CTAS TEMP WITH CTE person_id", {
+  sql <- translateSql(
+    "WITH a AS b SELECT person_id, col1, col2 INTO #table FROM person;", 
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+  "CREATE TABLE  #table \nDISTKEY(person_id)\nAS\nWITH\n a \nAS\n b \nSELECT\n  person_id , col1, col2 \nFROM\n person;")
+})
+
+test_that("translateSQL sql server -> RedShift CTA WITH CTE person_id", {
+  sql <- translateSql(
+    "WITH a AS b SELECT person_id, col1, col2 INTO table FROM person;", 
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+  "CREATE TABLE  table \nDISTKEY(person_id)\nAS\nWITH\n a \nAS\n b \nSELECT\n  person_id , col1, col2 \nFROM\n person;")
+})
+
+test_that("translateSQL sql server -> RedShift CTAS TEMP person_id", {
+  sql <- translateSql(
+    "SELECT person_id, col1, col2 INTO #table FROM person;", 
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+  "CREATE TABLE  #table \nDISTKEY(person_id)\nAS\nSELECT\n  person_id , col1, col2 \nFROM\n person;")
+})
+
+test_that("translateSQL sql server -> RedShift CTAS person_id", {
+  sql <- translateSql(
+    "SELECT person_id, col1, col2 INTO table FROM person;", 
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+  "CREATE TABLE  table \nDISTKEY(person_id)\nAS\nSELECT\n  person_id , col1, col2 \nFROM\n person;")
+})
+
+test_that("translateSQL sql server -> RedShift CREATE TABLE person_id", {
+  sql <- translateSql(
+    "CREATE TABLE [dbo].[drug_era] ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL);", 
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+  "CREATE TABLE  [dbo].[drug_era]  ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL)\nDISTKEY(person_id);")
+})
