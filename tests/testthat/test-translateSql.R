@@ -787,9 +787,9 @@ test_that("translateSQL sql server -> RedShift STUFF", {
 
 test_that("translateSQL sql server -> RedShift CONCAT", {
   sql <- translateSql(
-    "SELECT CONCAT(p1,p2,p3,p4) FROM table", 
+    "SELECT CONCAT(p1,p2,p3,p4,p5,p6,p7) FROM table", 
     sourceDialect = "sql server", targetDialect = "redshift")$sql
-  expect_equal(sql, "SELECT CONCAT(CONCAT(CONCAT(p1,p2),p3),p4) FROM table")
+  expect_equal(sql, "SELECT CONCAT(p1,CONCAT(p2,CONCAT(p3,CONCAT(p4,CONCAT(p5,CONCAT(p6,p7)))))) FROM table")
 })
 
 test_that("translateSQL sql server -> RedShift CTAS TEMP WITH CTE person_id", {
