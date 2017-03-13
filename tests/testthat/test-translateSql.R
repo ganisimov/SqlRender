@@ -839,3 +839,27 @@ test_that("translateSQL sql server -> PDW CREATE TABLE person_id", {
   expect_equal(sql, 
   "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   [dbo].[drug_era]  ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL)\nWITH (DISTRIBUTION = HASH(person_id));")
 })
+
+test_that("translateSQL sql server -> RedShift ISDATE", {
+  sql <- translateSql(
+    "SELECT * FROM table WHERE ISDATE(col) = 1", 
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+    "SELECT * FROM table WHERE REGEXP_INSTR(col, '^(\\\\d{4}[/\\-]?[01]\\\\d[/\\-]?[0123]\\\\d)([ T]([0-1][0-9]|[2][0-3]):([0-5][0-9])(:[0-5][0-9](.\\\\d+)?)?)?$') = 1")
+})
+
+test_that("translateSQL sql server -> RedShift ISNUMERIC", {
+  sql <- translateSql(
+    "SELECT * FROM table WHERE ISNUMERIC(col) = 1", 
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+    "SELECT * FROM table WHERE REGEXP_INSTR(col, '^[\\-\\+]?(\\\\d*\\\\.)?\\\\d+([Ee][\\-\\+]?\\\\d+)?$') = 1")
+})
+
+test_that("translateSQL sql server -> RedShift PATINDEX", {
+  sql <- translateSql(
+    "SELECT PATINDEX(pattern,expression) FROM table;",
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+    "SELECT REGEXP_INSTR(expression, case when LEFT(pattern,1)<>'%' and RIGHT(pattern,1)='%' then '^' else '' end||TRIM('%' FROM REPLACE(pattern,'_','.'))||case when LEFT(pattern,1)='%' and RIGHT(pattern,1)<>'%' then '$' else '' end) FROM table;")
+})
