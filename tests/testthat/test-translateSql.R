@@ -863,3 +863,11 @@ test_that("translateSQL sql server -> RedShift PATINDEX", {
   expect_equal(sql, 
     "SELECT REGEXP_INSTR(expression, case when LEFT(pattern,1)<>'%' and RIGHT(pattern,1)='%' then '^' else '' end||TRIM('%' FROM REPLACE(pattern,'_','.'))||case when LEFT(pattern,1)='%' and RIGHT(pattern,1)<>'%' then '$' else '' end) FROM table;")
 })
+
+test_that("translateSQL sql server -> RedShift CREATE TABLE IF NOT EXISTS with hashing", {
+  sql <- translateSql(
+    "IF OBJECT_ID('cdm.heracles_results', 'U') IS NULL CREATE TABLE cdm.heracles_results (cohort_definition_id int, analysis_id int, stratum_1 varchar(255), stratum_2 varchar(255), stratum_3 varchar(255), stratum_4 varchar(255), stratum_5 varchar(255), count_value bigint, last_update_time datetime) DISTKEY(analysis_id);",
+    sourceDialect = "sql server", targetDialect = "redshift")$sql
+  expect_equal(sql, 
+    "CREATE TABLE IF NOT EXISTS  cdm.heracles_results  (cohort_definition_id int, analysis_id int, stratum_1 varchar(255), stratum_2 varchar(255), stratum_3 varchar(255), stratum_4 varchar(255), stratum_5 varchar(255), count_value bigint, last_update_time TIMESTAMP) DISTKEY(analysis_id);")
+})

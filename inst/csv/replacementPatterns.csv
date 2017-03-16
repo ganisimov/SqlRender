@@ -165,7 +165,7 @@ From,To,Pattern,Replacement
 "sql server","redshift","NTEXT","VARCHAR(max)"
 "sql server","redshift","NEWID()","MD5(RANDOM()::TEXT || GETDATE()::TEXT)"
 "sql server","redshift","USE @schema;","SET search_path TO @schema;"
-"sql server","redshift","IF OBJECT_ID('@table', 'U') IS NULL CREATE TABLE @table (@definition);","CREATE TABLE IF NOT EXISTS @table (@definition);"
+"sql server","redshift","IF OBJECT_ID('@table', 'U') IS NULL CREATE TABLE @table (","CREATE TABLE IF NOT EXISTS @table ("
 "sql server","redshift","IF OBJECT_ID('@table', 'U') IS NOT NULL DROP TABLE @table;","DROP TABLE IF EXISTS @table;"
 "sql server","redshift","IF OBJECT_ID('tempdb..#@table', 'U') IS NOT NULL DROP TABLE @table;","DROP TABLE IF EXISTS #@table;"
 "sql server","redshift",".dbo.","."
