@@ -15,13 +15,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 public class SqlTranslate {
 	public static int							SESSION_ID_LENGTH					= 8;
 	private static Map<String, List<String[]>>	sourceTargetToReplacementPatterns	= null;
+	private static List<Rule> rules = null;
 	private static ReentrantLock				lock								= new ReentrantLock();
 	private static Random						random								= new Random();
 	private static String						globalSessionId						= null;
+	private static String RULE_VARIABLE_RESTRICTION = "variable_restriction";
 
 	private static class Block extends StringUtils.Token {
 		public boolean	isVariable;
@@ -39,6 +42,13 @@ public class SqlTranslate {
 		public Map<String, String>	variableToValue	= new HashMap<String, String>();
 	}
 
+	private static class Rule {
+		public String type;
+		public String dialect;
+		public String subject;
+		public String definition;
+	}
+
 	private static List<Block> parseSearchPattern(String pattern) {
 		List<StringUtils.Token> tokens = StringUtils.tokenizeSql(pattern.toLowerCase());
 		List<Block> blocks = new ArrayList<Block>();
@@ -48,10 +58,20 @@ public class SqlTranslate {
 				block.isVariable = true;
 			blocks.add(block);
 		}
-		if (blocks.get(0).isVariable || blocks.get(blocks.size() - 1).isVariable) {
+		if ((blocks.get(0).isVariable && getVariableRegex(blocks.get(0).text) == null) 
+						|| (blocks.get(blocks.size() - 1).isVariable && getVariableRegex(blocks.get(blocks.size() - 1).text) == null) ) {
 			throw new RuntimeException("Error in search pattern: pattern cannot start or end with a variable: " + pattern);
 		}
 		return blocks;
+	}
+
+	private static String getVariableRegex(String name) {
+		for (Rule rule: rules) {
+			if (RULE_VARIABLE_RESTRICTION.equalsIgnoreCase(rule.type) && name.equalsIgnoreCase(rule.subject)) {
+				return rule.definition;
+			}
+		}
+		return null;
 	}
 
 	private static MatchedPattern search(String sql, List<Block> parsedPattern, int startToken) {
@@ -65,8 +85,26 @@ public class SqlTranslate {
 		for (int cursor = startToken; cursor < tokens.size(); cursor++) {
 			StringUtils.Token token = tokens.get(cursor);
 			if (parsedPattern.get(matchCount).isVariable) {
-				if (nestStack.size() == 0 && token.text.equals(parsedPattern.get(matchCount + 1).text)) {
-					matchedPattern.variableToValue.put(parsedPattern.get(matchCount).text, sql.substring(varStart, token.start));
+				String varName = parsedPattern.get(matchCount).text;
+				String varValue = sql.substring(varStart, token.end).replaceAll("(^ )|( $)", "");
+				String varRegex = getVariableRegex(varName);
+				if (nestStack.size() == 0 
+								&& varRegex != null 
+								&& Pattern.matches(varRegex, varValue) 
+								&& (cursor + 1 == tokens.size() 
+								|| (cursor + 1 < tokens.size() && !Pattern.matches(varRegex, sql.substring(varStart, tokens.get(cursor + 1).end).replaceAll("(^ )|( $)", ""))))) {
+					matchedPattern.variableToValue.put(varName, varValue);
+					matchCount++;
+					if (matchCount == parsedPattern.size()) {
+						matchedPattern.end = token.end;
+						return matchedPattern;
+					} else if (parsedPattern.get(matchCount).isVariable) {
+						varStart = token.end;
+					}
+				}
+				else if (nestStack.size() == 0 && varRegex == null && token.text.equals(parsedPattern.get(matchCount + 1).text)) {
+					varValue = sql.substring(varStart, token.start).replaceAll("(^ )|( $)", "");
+					matchedPattern.variableToValue.put(varName, varValue);
 					matchCount += 2;
 					if (matchCount == parsedPattern.size()) {
 						matchedPattern.end = token.end;
@@ -280,11 +318,11 @@ public class SqlTranslate {
 	}
 
 	private static void ensurePatternsAreLoaded(String pathToReplacementPatterns) {
-		if (sourceTargetToReplacementPatterns != null)
+		if (sourceTargetToReplacementPatterns != null && rules != null)
 			return;
 		else {
 			lock.lock();
-			if (sourceTargetToReplacementPatterns == null) { // Could have been loaded before acquiring the lock
+			if (sourceTargetToReplacementPatterns == null || rules == null) { // Could have been loaded before acquiring the lock
 				try {
 					InputStream inputStream;
 					if (pathToReplacementPatterns == null) // Use CSV file in JAR
@@ -294,6 +332,8 @@ public class SqlTranslate {
 						inputStream = new FileInputStream(pathToReplacementPatterns);
 					BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
 					sourceTargetToReplacementPatterns = new HashMap<String, List<String[]>>();
+					rules = new ArrayList<Rule>();
+
 					String line;
 					boolean first = true;
 					while ((line = bufferedReader.readLine()) != null) {
@@ -301,14 +341,26 @@ public class SqlTranslate {
 							first = false;
 							continue;
 						}
+
 						List<String> row = line2columns(line);
-						String sourceTarget = row.get(0) + "\t" + row.get(1);
-						List<String[]> replacementPatterns = sourceTargetToReplacementPatterns.get(sourceTarget);
-						if (replacementPatterns == null) {
-							replacementPatterns = new ArrayList<String[]>();
-							sourceTargetToReplacementPatterns.put(sourceTarget, replacementPatterns);
+						// some records may have special meaning, i.e. definition of variable's restriction
+						if (RULE_VARIABLE_RESTRICTION.equalsIgnoreCase(row.get(0))) {
+							Rule rule = new Rule();
+							rule.type = row.get(0);
+							rule.dialect = row.get(1);
+							rule.subject = row.get(2).replaceAll("@", "@@");
+							rule.definition = row.get(3);
+							rules.add(rule);
+						} else {
+							// by default records contain replacement patterns
+							String sourceTarget = row.get(0) + "\t" + row.get(1);
+							List<String[]> replacementPatterns = sourceTargetToReplacementPatterns.get(sourceTarget);
+							if (replacementPatterns == null) {
+								replacementPatterns = new ArrayList<String[]>();
+								sourceTargetToReplacementPatterns.put(sourceTarget, replacementPatterns);
+							}
+							replacementPatterns.add(new String[] { row.get(2).replaceAll("@", "@@"), row.get(3).replaceAll("@", "@@") });
 						}
-						replacementPatterns.add(new String[] { row.get(2).replaceAll("@", "@@"), row.get(3).replaceAll("@", "@@") });
 					}
 				} catch (UnsupportedEncodingException e) {
 					System.err.println("Computer does not support UTF-8 encoding");

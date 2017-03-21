@@ -4,7 +4,7 @@ test_that("translateSQL sql server -> Oracle DATEDIFF", {
   sql <- translateSql("SELECT DATEDIFF(dd,drug_era_start_date,drug_era_end_date) FROM drug_era;",
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
-  expect_equal(sql, "SELECT   (drug_era_end_date - drug_era_start_date)  FROM  drug_era ;")
+  expect_equal(sql, "SELECT (drug_era_end_date - drug_era_start_date) FROM drug_era;")
 })
 
 
@@ -12,12 +12,12 @@ test_that("translateSQL sql server -> Oracle DATEADD", {
   sql <- translateSql("SELECT DATEADD(dd,30,drug_era_end_date) FROM drug_era;",
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
-  expect_equal(sql, "SELECT   (drug_era_end_date + 30)  FROM  drug_era ;")
+  expect_equal(sql, "SELECT (drug_era_end_date + 30) FROM drug_era;")
 })
 
 test_that("translateSQL sql server -> Oracle USE", {
   sql <- translateSql("USE vocabulary;", sourceDialect = "sql server", targetDialect = "oracle")$sql
-  expect_equal(sql, "ALTER SESSION SET current_schema =  vocabulary;")
+  expect_equal(sql, "ALTER SESSION SET current_schema = vocabulary;")
 })
 
 test_that("translateSQL sql server -> Oracle DROP TABLE IF EXISTS", {
@@ -25,7 +25,7 @@ test_that("translateSQL sql server -> Oracle DROP TABLE IF EXISTS", {
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "BEGIN\n  EXECUTE IMMEDIATE 'TRUNCATE TABLE  cohort';\n  EXECUTE IMMEDIATE 'DROP TABLE  cohort';\nEXCEPTION\n  WHEN OTHERS THEN\n    IF SQLCODE != -942 THEN\n      RAISE;\n    END IF;\nEND;")
+               "BEGIN\n  EXECUTE IMMEDIATE 'TRUNCATE TABLE cohort';\n  EXECUTE IMMEDIATE 'DROP TABLE cohort';\nEXCEPTION\n  WHEN OTHERS THEN\n    IF SQLCODE != -942 THEN\n      RAISE;\n    END IF;\nEND;")
 })
 
 
@@ -33,7 +33,7 @@ test_that("translateSQL sql server -> Oracle CAST(AS DATE)", {
   sql <- translateSql("CAST('20000101' AS DATE);",
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
-  expect_equal(sql, "TO_DATE('20000101' , 'yyyymmdd');")
+  expect_equal(sql, "TO_DATE('20000101', 'yyyymmdd');")
 })
 
 test_that("translateSQL sql server -> Oracle concatenate string operator", {
@@ -41,14 +41,14 @@ test_that("translateSQL sql server -> Oracle concatenate string operator", {
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "SELECT  distinct TO_DATE(TO_CHAR(EXTRACT(YEAR FROM observation_period_start_date) ) || '01' || '01' , 'yyyymmdd') as obs_year FROM DUAL;")
+               "SELECT distinct TO_DATE(TO_CHAR(EXTRACT(YEAR FROM observation_period_start_date)) || '01' || '01', 'yyyymmdd') as obs_year FROM DUAL;")
 })
 
 test_that("translateSQL sql server -> Oracle RIGHT functions", {
   sql <- translateSql("select RIGHT(x,4);",
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
-  expect_equal(sql, "SELECT  SUBSTR(x,-4) FROM DUAL;")
+  expect_equal(sql, "SELECT SUBSTR(x,-4) FROM DUAL;")
 })
 
 test_that("translateSQL sql server -> Oracle complex query", {
@@ -56,19 +56,19 @@ test_that("translateSQL sql server -> Oracle complex query", {
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "SELECT  TO_DATE(TO_CHAR(EXTRACT(YEAR FROM x)  ) || SUBSTR('0' ||EXTRACT(MONTH FROM x),-2) || '01' , 'yyyymmdd') FROM DUAL;")
+               "SELECT TO_DATE(TO_CHAR(EXTRACT(YEAR FROM x)) || SUBSTR('0' ||EXTRACT(MONTH FROM x),-2) || '01', 'yyyymmdd') FROM DUAL;")
 })
 
 test_that("translateSQL sql server -> Oracle '+' in quote", {
   sql <- translateSql("select '+';", sourceDialect = "sql server", targetDialect = "oracle")$sql
-  expect_equal(sql, "SELECT  '+' FROM DUAL;")
+  expect_equal(sql, "SELECT '+' FROM DUAL;")
 })
 
 test_that("translateSQL sql server -> PostgreSQL USE", {
   sql <- translateSql("USE vocabulary;",
                       sourceDialect = "sql server",
                       targetDialect = "postgresql")$sql
-  expect_equal(sql, "SET search_path TO  vocabulary;")
+  expect_equal(sql, "SET search_path TO vocabulary;")
 })
 
 test_that("translateSQL sql server -> PostgreSQL string concat", {
@@ -101,7 +101,7 @@ test_that("translateSQL sql server -> Oracle multiple inserts in one statement",
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "INSERT ALL\nINTO   my_table   (key,value) VALUES (1,0)\n INTO  my_table  (key,value) VALUES (2,0)\n)\n INTO   my_table   (key,value) VALUES (3,1)\nSELECT * FROM dual")
+               "INSERT ALL\nINTO my_table (key,value) VALUES (1,0)\n INTO my_table (key,value) VALUES (2,0)\n)\n INTO my_table (key,value) VALUES (3,1)\nSELECT * FROM dual")
 })
 
 test_that("translateSQL sql server -> RedShift VARCHAR(MAX)", {
@@ -121,14 +121,14 @@ test_that("translateSQL sql server -> Postgres WITH SELECT INTO", {
                       sourceDialect = "sql server",
                       targetDialect = "postgresql")$sql
   expect_equal(sql,
-               "CREATE TABLE  d \nAS\nWITH  cte1  AS  (SELECT a FROM b)  SELECT\n c \nFROM\n cte1;")
+               "CREATE TABLE d\nAS\nWITH cte1 AS (SELECT a FROM b) SELECT\nc\nFROM\ncte1;")
 })
 
 test_that("translateSQL sql server -> Postgres WITH SELECT INTO without FROM", {
   sql <- translateSql("SELECT c INTO d;",
                       sourceDialect = "sql server",
                       targetDialect = "postgresql")$sql
-  expect_equal(sql, "CREATE TABLE  d AS\nSELECT\n c ;")
+  expect_equal(sql, "CREATE TABLE d AS\nSELECT\nc;")
 })
 
 
@@ -143,7 +143,7 @@ test_that("translateSQL sql server -> Oracle WITH SELECT", {
   sql <- translateSql("WITH cte1 AS (SELECT a FROM b) SELECT c FROM cte1;",
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
-  expect_equal(sql, "WITH cte1 AS (SELECT   a  FROM  b ) SELECT   c  FROM  cte1 ;")
+  expect_equal(sql, "WITH cte1 AS (SELECT a FROM b) SELECT c FROM cte1;")
 })
 
 test_that("translateSQL sql server -> Oracle WITH SELECT INTO", {
@@ -151,7 +151,7 @@ test_that("translateSQL sql server -> Oracle WITH SELECT INTO", {
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "CREATE TABLE  d  \nAS\nWITH  cte1  AS  (SELECT   a  FROM  b )  SELECT\n   c \nFROM\n  cte1 ;")
+               "CREATE TABLE d\nAS\nWITH cte1 AS (SELECT a FROM b) SELECT\nc\nFROM\ncte1;")
 })
 
 test_that("translateSQL sql server -> Oracle WITH INSERT INTO SELECT", {
@@ -159,7 +159,7 @@ test_that("translateSQL sql server -> Oracle WITH INSERT INTO SELECT", {
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "INSERT INTO  c (d int)  WITH  cte1  AS  (SELECT   a  FROM  b )  SELECT    e  FROM  cte1 ;")
+               "INSERT INTO c (d int) WITH cte1 AS (SELECT a FROM b) SELECT e FROM cte1;")
 })
 
 test_that("translateSQL sql server -> PDW WITH SELECT INTO", {
@@ -167,7 +167,7 @@ test_that("translateSQL sql server -> PDW WITH SELECT INTO", {
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   d  WITH (DISTRIBUTION = REPLICATE)\nAS\nWITH  cte1  AS  (SELECT a FROM b)  SELECT\n c \nFROM\n cte1;")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  d WITH (DISTRIBUTION = REPLICATE)\nAS\nWITH cte1 AS (SELECT a FROM b) SELECT\nc\nFROM\ncte1;")
 })
 
 test_that("translateSQL sql server -> PDW WITH SELECT INTO temp table", {
@@ -175,7 +175,7 @@ test_that("translateSQL sql server -> PDW WITH SELECT INTO temp table", {
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #d   WITH (LOCATION = USER_DB, DISTRIBUTION =  REPLICATE) AS\nWITH  cte1  AS  (SELECT a FROM b)  SELECT\n c \nFROM\n cte1;")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #d WITH (LOCATION = USER_DB, DISTRIBUTION = REPLICATE) AS\nWITH cte1 AS (SELECT a FROM b) SELECT\nc\nFROM\ncte1;")
 })
 
 test_that("translateSQL sql server -> PDW create temp table", {
@@ -183,7 +183,7 @@ test_that("translateSQL sql server -> PDW create temp table", {
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #a   (x int)\nWITH (LOCATION = USER_DB, DISTRIBUTION =  REPLICATE);")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #a (x int)\nWITH (LOCATION = USER_DB, DISTRIBUTION = REPLICATE);")
 })
 
 test_that("translateSQL sql server -> PDW create temp table with person_id", {
@@ -191,7 +191,7 @@ test_that("translateSQL sql server -> PDW create temp table with person_id", {
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #a   ( person_id  int)\nWITH (LOCATION = USER_DB, DISTRIBUTION =  HASH(person_id));")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #a (person_id int)\nWITH (LOCATION = USER_DB, DISTRIBUTION = HASH(person_id));")
 })
 
 test_that("translateSQL sql server -> PDW create temp table with subject_id", {
@@ -199,7 +199,7 @@ test_that("translateSQL sql server -> PDW create temp table with subject_id", {
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #a   ( subject_id  int)\nWITH (LOCATION = USER_DB, DISTRIBUTION =  HASH(subject_id));")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #a (subject_id int)\nWITH (LOCATION = USER_DB, DISTRIBUTION = HASH(subject_id));")
 })
 
 test_that("translateSQL sql server -> PDW create temp table with analysis_id", {
@@ -207,7 +207,7 @@ test_that("translateSQL sql server -> PDW create temp table with analysis_id", {
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #a   ( analysis_id  int)\nWITH (LOCATION = USER_DB, DISTRIBUTION =  HASH(analysis_id));")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #a (analysis_id int)\nWITH (LOCATION = USER_DB, DISTRIBUTION = HASH(analysis_id));")
 })
 
 test_that("translateSQL sql server -> PDW create permanent table", {
@@ -215,7 +215,7 @@ test_that("translateSQL sql server -> PDW create permanent table", {
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   a  (x int)\nWITH (DISTRIBUTION = REPLICATE);")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  a (x int)\nWITH (DISTRIBUTION = REPLICATE);")
 })
 
 test_that("translateSQL sql server -> PDW create permanent table with person_id", {
@@ -223,7 +223,7 @@ test_that("translateSQL sql server -> PDW create permanent table with person_id"
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   a  ( person_id  int)\nWITH (DISTRIBUTION = HASH(person_id));")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  a ( person_id int)\nWITH (DISTRIBUTION = HASH(person_id));")
 })
 
 test_that("translateSQL sql server -> PDW create permanent table with subject_id", {
@@ -231,7 +231,7 @@ test_that("translateSQL sql server -> PDW create permanent table with subject_id
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   a  ( subject_id  int)\nWITH (DISTRIBUTION = HASH(subject_id));")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  a ( subject_id int)\nWITH (DISTRIBUTION = HASH(subject_id));")
 })
 
 test_that("translateSQL sql server -> PDW create permanent table with analysis_id", {
@@ -239,7 +239,7 @@ test_that("translateSQL sql server -> PDW create permanent table with analysis_i
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   a  ( analysis_id  int)\nWITH (DISTRIBUTION = HASH(analysis_id));")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  a ( analysis_id int)\nWITH (DISTRIBUTION = HASH(analysis_id));")
 })
 
 test_that("translateSQL sql server -> PDW select into permanent table", {
@@ -247,7 +247,7 @@ test_that("translateSQL sql server -> PDW select into permanent table", {
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   b  WITH (DISTRIBUTION = REPLICATE)\nAS\nSELECT\n a \nFROM\n c WHERE a = 1;")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  b WITH (DISTRIBUTION = REPLICATE)\nAS\nSELECT\na\nFROM\nc WHERE a = 1;")
 })
 
 test_that("translateSQL sql server -> PDW select into permanent table with person_id", {
@@ -255,7 +255,7 @@ test_that("translateSQL sql server -> PDW select into permanent table with perso
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   b  WITH (DISTRIBUTION = HASH(person_id))\nAS\nSELECT\n a,  person_id,  b \nFROM\n c WHERE a = 1;")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  b WITH (DISTRIBUTION = HASH(person_id))\nAS\nSELECT\na, person_id, b\nFROM\nc WHERE a = 1;")
 })
 
 test_that("translateSQL sql server -> PDW select into permanent table with analysis_id", {
@@ -263,21 +263,21 @@ test_that("translateSQL sql server -> PDW select into permanent table with analy
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   b  WITH (DISTRIBUTION = HASH(analysis_id))\nAS\nSELECT\n a,  analysis_id,  b \nFROM\n c WHERE a = 1;")
+               "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  b WITH (DISTRIBUTION = HASH(analysis_id))\nAS\nSELECT\na, analysis_id, b\nFROM\nc WHERE a = 1;")
 })
 
 test_that("translateSQL sql server -> Postgres create table if not exists", {
   sql <- translateSql("IF OBJECT_ID('cohort', 'U') IS NULL\n CREATE TABLE cohort\n(cohort_definition_id INT);",
                       sourceDialect = "sql server",
                       targetDialect = "postgresql")$sql
-  expect_equal(sql, "CREATE TABLE IF NOT EXISTS  cohort\n (cohort_definition_id INT);")
+  expect_equal(sql, "CREATE TABLE IF NOT EXISTS cohort\n (cohort_definition_id INT);")
 })
 
 test_that("translateSQL sql server -> Redshift create table if not exists", {
   sql <- translateSql("IF OBJECT_ID('cohort', 'U') IS NULL\n CREATE TABLE cohort\n(cohort_definition_id INT);",
                       sourceDialect = "sql server",
                       targetDialect = "redshift")$sql
-  expect_equal(sql, "CREATE TABLE IF NOT EXISTS  cohort\n (cohort_definition_id INT);")
+  expect_equal(sql, "CREATE TABLE IF NOT EXISTS cohort\n (cohort_definition_id INT);")
 })
 
 test_that("translateSQL sql server -> Oracle create table if not exists", {
@@ -285,7 +285,7 @@ test_that("translateSQL sql server -> Oracle create table if not exists", {
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "BEGIN\n  EXECUTE IMMEDIATE 'CREATE TABLE  cohort\n (cohort_definition_id INT)';\nEXCEPTION\n  WHEN OTHERS THEN\n    IF SQLCODE != -955 THEN\n      RAISE;\n    END IF;\nEND;")
+               "BEGIN\n  EXECUTE IMMEDIATE 'CREATE TABLE cohort\n (cohort_definition_id INT)';\nEXCEPTION\n  WHEN OTHERS THEN\n    IF SQLCODE != -955 THEN\n      RAISE;\n    END IF;\nEND;")
 })
 
 test_that("translateSQL sql server -> Oracle datefromparts", {
@@ -317,7 +317,7 @@ test_that("translateSQL sql server -> Oracle select random row", {
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "SELECT column FROM (SELECT   column, ROW_NUMBER() OVER (ORDER BY DBMS_RANDOM.VALUE) AS rn  FROM  table ) tmp WHERE rn <= 1")
+               "SELECT column FROM (SELECT column, ROW_NUMBER() OVER (ORDER BY DBMS_RANDOM.VALUE) AS rn FROM table) tmp WHERE rn <= 1")
 })
 
 test_that("translateSQL sql server -> Postgres select random row", {
@@ -341,7 +341,7 @@ test_that("translateSQL sql server -> Oracle select random row using hash", {
                       sourceDialect = "sql server",
                       targetDialect = "oracle")$sql
   expect_equal(sql,
-               "SELECT column FROM (SELECT column, ROW_NUMBER() OVER (ORDER BY DBMS_CRYPTO.HASH(TO_CHAR(person_id ),2)) tmp WHERE rn <= 1")
+               "SELECT column FROM (SELECT column, ROW_NUMBER() OVER (ORDER BY DBMS_CRYPTO.HASH(TO_CHAR(person_id),2)) tmp WHERE rn <= 1")
 })
 
 test_that("translateSQL sql server -> Postgres select random row using hash", {
@@ -365,7 +365,7 @@ test_that("translateSQL sql server -> PDW cte with preceding 'with' in quotes", 
                       sourceDialect = "sql server",
                       targetDialect = "pdw")$sql
   expect_equal(sql,
-               "insert into x (a) values ('with'); IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #c   WITH (LOCATION = USER_DB, DISTRIBUTION =  REPLICATE) AS\nWITH  cte (a)  AS (select a from b)  SELECT\n a \nFROM\n cte;")
+               "insert into x (a) values ('with'); IF XACT_STATE() = 1 COMMIT; CREATE TABLE  #c WITH (LOCATION = USER_DB, DISTRIBUTION = REPLICATE) AS\nWITH cte (a) AS (select a from b) SELECT\na\nFROM\ncte;")
 })
 
 test_that("translateSQL sql server throws error when invalid target is given", {
@@ -376,7 +376,7 @@ test_that("translateSQL sql server throws error when invalid target is given", {
 test_that("translateSQL select into issue for pdw", {
   sql <- "SELECT @c1 INTO table FROM @c2 WHERE a = 1;"
   sql <- translateSql(sql, targetDialect = "pdw")$sql
-  expect_equal(sql, "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   table  WITH (DISTRIBUTION = REPLICATE)\nAS\nSELECT\n @c1 \nFROM\n @c2 WHERE a = 1;")
+  expect_equal(sql, "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  table WITH (DISTRIBUTION = REPLICATE)\nAS\nSELECT\n@c1\nFROM\n@c2 WHERE a = 1;")
 })
 
 
@@ -384,7 +384,7 @@ test_that("translateSQL select into issue for pdw", {
 test_that("translateSQL ## issue on oracle", {
   sql <- "SELECT a FROM c##blah.table;"
   sql <- translateSql(sql, targetDialect = "oracle")$sql
-  expect_equal(sql, "SELECT   a  FROM  c##blah.table ;")
+  expect_equal(sql, "SELECT a FROM c##blah.table;")
 })
 
 # Impala tests
@@ -400,21 +400,21 @@ test_that("translateSQL sql server -> Impala CAST(AS DATE)", {
     sql <- translateSql("CAST('20000101' AS DATE);",
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
-    expect_equal(sql, "CASE TYPEOF('20000101' ) WHEN 'TIMESTAMP' THEN CAST('20000101'  AS TIMESTAMP) ELSE TO_UTC_TIMESTAMP(CONCAT_WS('-', SUBSTR(CAST('20000101'  AS STRING), 1, 4), SUBSTR(CAST('20000101'  AS STRING), 5, 2), SUBSTR(CAST('20000101'  AS STRING), 7, 2)), 'UTC') END;")
+    expect_equal(sql, "CASE TYPEOF('20000101') WHEN 'TIMESTAMP' THEN CAST('20000101' AS TIMESTAMP) ELSE TO_UTC_TIMESTAMP(CONCAT_WS('-', SUBSTR(CAST('20000101' AS STRING), 1, 4), SUBSTR(CAST('20000101' AS STRING), 5, 2), SUBSTR(CAST('20000101' AS STRING), 7, 2)), 'UTC') END;")
 })
 
 test_that("translateSQL sql server -> Impala DATEDIFF", {
     sql <- translateSql("SELECT DATEDIFF(dd,drug_era_start_date,drug_era_end_date) FROM drug_era;",
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
-    expect_equal(sql, "SELECT DATEDIFF(CASE TYPEOF(drug_era_end_date ) WHEN 'TIMESTAMP' THEN CAST(drug_era_end_date  AS TIMESTAMP) ELSE TO_UTC_TIMESTAMP(CONCAT_WS('-', SUBSTR(CAST(drug_era_end_date  AS STRING), 1, 4), SUBSTR(CAST(drug_era_end_date  AS STRING), 5, 2), SUBSTR(CAST(drug_era_end_date  AS STRING), 7, 2)), 'UTC') END, CASE TYPEOF(drug_era_start_date ) WHEN 'TIMESTAMP' THEN CAST(drug_era_start_date  AS TIMESTAMP) ELSE TO_UTC_TIMESTAMP(CONCAT_WS('-', SUBSTR(CAST(drug_era_start_date  AS STRING), 1, 4), SUBSTR(CAST(drug_era_start_date  AS STRING), 5, 2), SUBSTR(CAST(drug_era_start_date  AS STRING), 7, 2)), 'UTC') END) FROM drug_era;")
+    expect_equal(sql, "SELECT DATEDIFF(CASE TYPEOF(drug_era_end_date) WHEN 'TIMESTAMP' THEN CAST(drug_era_end_date AS TIMESTAMP) ELSE TO_UTC_TIMESTAMP(CONCAT_WS('-', SUBSTR(CAST(drug_era_end_date AS STRING), 1, 4), SUBSTR(CAST(drug_era_end_date AS STRING), 5, 2), SUBSTR(CAST(drug_era_end_date AS STRING), 7, 2)), 'UTC') END, CASE TYPEOF(drug_era_start_date) WHEN 'TIMESTAMP' THEN CAST(drug_era_start_date AS TIMESTAMP) ELSE TO_UTC_TIMESTAMP(CONCAT_WS('-', SUBSTR(CAST(drug_era_start_date AS STRING), 1, 4), SUBSTR(CAST(drug_era_start_date AS STRING), 5, 2), SUBSTR(CAST(drug_era_start_date AS STRING), 7, 2)), 'UTC') END) FROM drug_era;")
 })
 
 test_that("translateSQL sql server -> Impala DATEADD", {
     sql <- translateSql("SELECT DATEADD(dd,30,drug_era_end_date) FROM drug_era;",
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
-    expect_equal(sql, "SELECT DATE_ADD(CASE TYPEOF(drug_era_end_date ) WHEN 'TIMESTAMP' THEN CAST(drug_era_end_date  AS TIMESTAMP) ELSE TO_UTC_TIMESTAMP(CONCAT_WS('-', SUBSTR(CAST(drug_era_end_date  AS STRING), 1, 4), SUBSTR(CAST(drug_era_end_date  AS STRING), 5, 2), SUBSTR(CAST(drug_era_end_date  AS STRING), 7, 2)), 'UTC') END, 30) FROM drug_era;")
+    expect_equal(sql, "SELECT DATE_ADD(CASE TYPEOF(drug_era_end_date) WHEN 'TIMESTAMP' THEN CAST(drug_era_end_date AS TIMESTAMP) ELSE TO_UTC_TIMESTAMP(CONCAT_WS('-', SUBSTR(CAST(drug_era_end_date AS STRING), 1, 4), SUBSTR(CAST(drug_era_end_date AS STRING), 5, 2), SUBSTR(CAST(drug_era_end_date AS STRING), 7, 2)), 'UTC') END, 30) FROM drug_era;")
 })
 
 test_that("translateSQL sql server -> Impala WITH SELECT", {
@@ -429,21 +429,21 @@ test_that("translateSQL sql server -> Impala WITH SELECT INTO", {
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
     expect_equal(sql,
-    "CREATE TABLE  d \nAS\nWITH  cte1  AS  (SELECT a FROM b)  SELECT\n c \nFROM\n cte1;")
+    "CREATE TABLE d\nAS\nWITH cte1 AS (SELECT a FROM b) SELECT\nc\nFROM\ncte1;")
 })
 
 test_that("translateSQL sql server -> Impala WITH SELECT INTO without FROM", {
     sql <- translateSql("SELECT c INTO d;",
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
-    expect_equal(sql, "CREATE TABLE  d AS\nSELECT\n c ;")
+    expect_equal(sql, "CREATE TABLE d AS\nSELECT\nc;")
 })
 
 test_that("translateSQL sql server -> Impala create table if not exists", {
     sql <- translateSql("IF OBJECT_ID('cohort', 'U') IS NULL\n CREATE TABLE cohort\n(cohort_definition_id INT);",
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
-    expect_equal(sql, "CREATE TABLE IF NOT EXISTS  cohort\n (cohort_definition_id INT);")
+    expect_equal(sql, "CREATE TABLE IF NOT EXISTS cohort\n (cohort_definition_id INT);")
 })
 
 test_that("translateSQL sql server -> Impala DROP TABLE IF EXISTS", {
@@ -451,7 +451,7 @@ test_that("translateSQL sql server -> Impala DROP TABLE IF EXISTS", {
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
     expect_equal(sql,
-    "DROP TABLE IF EXISTS  cohort;")
+    "DROP TABLE IF EXISTS cohort;")
 })
 
 test_that("translateSQL sql server -> Impala RIGHT functions", {
@@ -465,14 +465,14 @@ test_that("translateSQL sql server -> Impala DELETE FROM", {
     sql <- translateSql("delete from ACHILLES_results;",
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
-    expect_equal(sql, "/* DELETE FROM  ACHILLES_results; */")
+    expect_equal(sql, "/* DELETE FROM ACHILLES_results; */")
 })
 
 test_that("translateSQL sql server -> Impala DELETE FROM WHERE", {
     sql <- translateSql("delete from ACHILLES_results where analysis_id IN (1, 2, 3);",
     sourceDialect = "sql server",
     targetDialect = "impala")$sql
-    expect_equal(sql, "/* DELETE FROM  ACHILLES_results where analysis_id IN (1, 2, 3); */")
+    expect_equal(sql, "/* DELETE FROM ACHILLES_results where analysis_id IN (1, 2, 3); */")
 })
 
 test_that("translateSQL sql server -> Impala location reserved word", {
@@ -489,7 +489,7 @@ test_that("translateSQL sql server -> Netezza CAST(AS DATE)", {
     sql <- translateSql("CAST('20000101' AS DATE);",
     sourceDialect = "sql server",
     targetDialect = "netezza")$sql
-    expect_equal(sql, "TO_DATE('20000101' , 'yyyymmdd');")
+    expect_equal(sql, "TO_DATE('20000101', 'yyyymmdd');")
 })
 
 test_that("translateSQL sql server -> Netezza DATEDIFF", {
@@ -518,7 +518,7 @@ test_that("translateSQL sql server -> Netezza WITH SELECT INTO", {
     sourceDialect = "sql server",
     targetDialect = "netezza")$sql
     expect_equal(sql,
-    "CREATE TABLE  d \nAS\nWITH  cte1  AS  (SELECT a FROM b)  SELECT\n c \nFROM\n cte1;")
+    "CREATE TABLE d\nAS\nWITH cte1 AS (SELECT a FROM b) SELECT\nc\nFROM\ncte1;")
 })
 
 test_that("translateSQL sql server -> Netezza DROP TABLE IF EXISTS", {
@@ -526,7 +526,7 @@ test_that("translateSQL sql server -> Netezza DROP TABLE IF EXISTS", {
     sourceDialect = "sql server",
     targetDialect = "netezza")$sql
     expect_equal(sql,
-    "DROP TABLE  cohort IF EXISTS;")
+    "DROP TABLE cohort IF EXISTS;")
 })
 
 test_that("translateSQL sql server -> Netezza RIGHT functions", {
@@ -547,7 +547,26 @@ test_that("translateSQL sql server -> Netezza CAST AS VARCHAR", {
     sql <- translateSql("CAST(person_id AS VARCHAR);",
     sourceDialect = "sql server",
     targetDialect = "netezza")$sql
-    expect_equal(sql, "CAST(person_id  AS VARCHAR(1000));")
+    expect_equal(sql, "CAST(person_id AS VARCHAR(1000));")
+})
+
+test_that("translateSQL sql server -> pdw doesn't translate string literal", {
+    sql <- translateSql("SELECT 'CREATE TABLE table (id int not null);'",
+    sourceDialect = "sql server",
+    targetDialect = "pdw")$sql
+    expect_equal(sql, "SELECT 'CREATE TABLE table (id int not null);'")
+
+    sql <- translateSql("CREATE TABLE table (id int not null);",
+    sourceDialect = "sql server",
+    targetDialect = "pdw")$sql
+    expect_equal(sql, "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  table (id int not null)\nWITH (DISTRIBUTION = REPLICATE);")
+})
+
+test_that("translateSQL sql server -> redshift DISTINCT + TOP", {
+    sql <- translateSql("SELECT distinct top 1000 a from table;",
+    sourceDialect = "sql server",
+    targetDialect = "redshift")$sql
+    expect_equal(sql, "SELECT TOP 1000 DISTINCT a from table;")
 })
 
 test_that("translateSQL sql server -> RedShift DATE ADD DAYS dd", {
@@ -782,7 +801,7 @@ test_that("translateSQL sql server -> RedShift SPACE", {
 
 test_that("translateSQL sql server -> RedShift STUFF", {
   sql <- translateSql("SELECT STUFF(expression, start, length, replace) FROM table", sourceDialect = "sql server", targetDialect = "redshift")$sql
-  expect_equal(sql, "SELECT SUBSTRING(expression, 0, start)|| replace||SUBSTRING(expression, start + length) FROM table")
+  expect_equal(sql, "SELECT SUBSTRING(expression, 0, start)||replace||SUBSTRING(expression, start + length) FROM table")
 })
 
 test_that("translateSQL sql server -> RedShift CONCAT", {
@@ -797,7 +816,7 @@ test_that("translateSQL sql server -> RedShift CTAS TEMP WITH CTE person_id", {
     "WITH a AS b SELECT person_id, col1, col2 INTO #table FROM person;", 
     sourceDialect = "sql server", targetDialect = "redshift")$sql
   expect_equal(sql, 
-  "CREATE TABLE  #table \nDISTKEY(person_id)\nAS\nWITH\n a \nAS\n b \nSELECT\n  person_id , col1, col2 \nFROM\n person;")
+  "CREATE TABLE #table\nDISTKEY(person_id)\nAS\nWITH\na\nAS\nb\nSELECT\n person_id , col1, col2\nFROM\nperson;")
 })
 
 test_that("translateSQL sql server -> RedShift CTA WITH CTE person_id", {
@@ -805,7 +824,7 @@ test_that("translateSQL sql server -> RedShift CTA WITH CTE person_id", {
     "WITH a AS b SELECT person_id, col1, col2 INTO table FROM person;", 
     sourceDialect = "sql server", targetDialect = "redshift")$sql
   expect_equal(sql, 
-  "CREATE TABLE  table \nDISTKEY(person_id)\nAS\nWITH\n a \nAS\n b \nSELECT\n  person_id , col1, col2 \nFROM\n person;")
+  "CREATE TABLE table\nDISTKEY(person_id)\nAS\nWITH\na\nAS\nb\nSELECT\n person_id , col1, col2\nFROM\nperson;")
 })
 
 test_that("translateSQL sql server -> RedShift CTAS TEMP person_id", {
@@ -813,7 +832,7 @@ test_that("translateSQL sql server -> RedShift CTAS TEMP person_id", {
     "SELECT person_id, col1, col2 INTO #table FROM person;", 
     sourceDialect = "sql server", targetDialect = "redshift")$sql
   expect_equal(sql, 
-  "CREATE TABLE  #table \nDISTKEY(person_id)\nAS\nSELECT\n  person_id , col1, col2 \nFROM\n person;")
+  "CREATE TABLE #table\nDISTKEY(person_id)\nAS\nSELECT\n person_id , col1, col2\nFROM\nperson;")
 })
 
 test_that("translateSQL sql server -> RedShift CTAS person_id", {
@@ -821,7 +840,7 @@ test_that("translateSQL sql server -> RedShift CTAS person_id", {
     "SELECT person_id, col1, col2 INTO table FROM person;", 
     sourceDialect = "sql server", targetDialect = "redshift")$sql
   expect_equal(sql, 
-  "CREATE TABLE  table \nDISTKEY(person_id)\nAS\nSELECT\n  person_id , col1, col2 \nFROM\n person;")
+  "CREATE TABLE table\nDISTKEY(person_id)\nAS\nSELECT\n person_id , col1, col2\nFROM\nperson;")
 })
 
 test_that("translateSQL sql server -> RedShift CREATE TABLE person_id", {
@@ -829,7 +848,7 @@ test_that("translateSQL sql server -> RedShift CREATE TABLE person_id", {
     "CREATE TABLE [dbo].[drug_era] ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL);", 
     sourceDialect = "sql server", targetDialect = "redshift")$sql
   expect_equal(sql, 
-  "CREATE TABLE  [dbo].[drug_era]  ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL)\nDISTKEY(person_id);")
+  "CREATE TABLE [dbo].[drug_era] ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL)\nDISTKEY(person_id);")
 })
 
 test_that("translateSQL sql server -> PDW CREATE TABLE person_id", {
@@ -837,7 +856,7 @@ test_that("translateSQL sql server -> PDW CREATE TABLE person_id", {
     "CREATE TABLE [dbo].[drug_era] ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL);", 
     sourceDialect = "sql server", targetDialect = "pdw")$sql
   expect_equal(sql, 
-  "IF XACT_STATE() = 1 COMMIT; CREATE TABLE   [dbo].[drug_era]  ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL)\nWITH (DISTRIBUTION = HASH(person_id));")
+  "IF XACT_STATE() = 1 COMMIT; CREATE TABLE  [dbo].[drug_era] ([drug_era_id] bigint NOT NULL, [person_id] bigint NOT NULL, [drug_concept_id] bigint NOT NULL, [drug_era_start_date] date NOT NULL, [drug_era_end_date] date NOT NULL, [drug_exposure_count] int NULL, [gap_days] int NULL)\nWITH (DISTRIBUTION = HASH(person_id));")
 })
 
 test_that("translateSQL sql server -> RedShift ISDATE", {
@@ -869,5 +888,5 @@ test_that("translateSQL sql server -> RedShift CREATE TABLE IF NOT EXISTS with h
     "IF OBJECT_ID('cdm.heracles_results', 'U') IS NULL CREATE TABLE cdm.heracles_results (cohort_definition_id int, analysis_id int, stratum_1 varchar(255), stratum_2 varchar(255), stratum_3 varchar(255), stratum_4 varchar(255), stratum_5 varchar(255), count_value bigint, last_update_time datetime) DISTKEY(analysis_id);",
     sourceDialect = "sql server", targetDialect = "redshift")$sql
   expect_equal(sql, 
-    "CREATE TABLE IF NOT EXISTS  cdm.heracles_results  (cohort_definition_id int, analysis_id int, stratum_1 varchar(255), stratum_2 varchar(255), stratum_3 varchar(255), stratum_4 varchar(255), stratum_5 varchar(255), count_value bigint, last_update_time TIMESTAMP) DISTKEY(analysis_id);")
+    "CREATE TABLE IF NOT EXISTS cdm.heracles_results (cohort_definition_id int, analysis_id int, stratum_1 varchar(255), stratum_2 varchar(255), stratum_3 varchar(255), stratum_4 varchar(255), stratum_5 varchar(255), count_value bigint, last_update_time TIMESTAMP) DISTKEY(analysis_id);")
 })
